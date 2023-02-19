@@ -3,7 +3,7 @@ const { Worker } = require("worker_threads");
 
 const app = express();
 const port = process.env.PORT || 3001;
-const THREAD_COUNT = 2;
+const THREAD_COUNT = 12;
 
 app.get("/non-blocking/", (req, res) => {
     res.status(200).send("This page is non-blocking");
@@ -23,6 +23,7 @@ function createWorker() {
     });
 }
 
+// 4 seg aprox with 12 thread
 app.get("/blocking", async (req, res) => {
     const workerPromises = [];
     for (let i = 0; i < THREAD_COUNT; i++) {
@@ -35,6 +36,15 @@ app.get("/blocking", async (req, res) => {
         thread_results[2] +
         thread_results[3];
     res.status(200).send(`result is ${total}`);
+});
+
+// 22 seg aprox
+app.get("/blocking-main-thread", async (req, res) => {
+    let counter = 0;
+    for (let i = 0; i < 20_000_000_000; i++) {
+        counter++;
+    }
+    res.status(200).send(`result is ${counter}`);
 });
 
 app.listen(port, () => {
