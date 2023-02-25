@@ -1,3 +1,4 @@
 # workers
 
-Basic repository to try to learn about workers, check the performance change
+To start the project:
+`npm run dev`
