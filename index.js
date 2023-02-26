@@ -1,6 +1,7 @@
 const express = require("express");
-const { Worker } = require("worker_threads");
 const path = require("path");
+const responseModel = require("./helpers/responseModel");
+const createWorker = require("./helpers/createWorker");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -14,28 +15,14 @@ app.get("/", function (req, res) {
 });
 
 app.get("/non-blocking/", (req, res) => {
-    res.status(200).send("non blocking page");
+    res.status(200).send(responseModel({ message: "non blocking page" }));
 });
-
-function createWorker() {
-    return new Promise(function (resolve, reject) {
-        const worker = new Worker("./workers.js", {
-            workerData: { threadCount: THREAD_COUNT, operationsAmmount },
-        });
-        worker.on("message", data => {
-            resolve(data);
-        });
-        worker.on("error", msg => {
-            reject(`An error ocurred: ${msg}`);
-        });
-    });
-}
 
 // 4 seg aprox with 12 thread
 app.get("/blocking", async (req, res) => {
     const workerPromises = [];
     for (let i = 0; i < THREAD_COUNT; i++) {
-        workerPromises.push(createWorker());
+        workerPromises.push(createWorker({ THREAD_COUNT, operationsAmmount }));
     }
     const threadResutls = await Promise.all(workerPromises);
     const total =
@@ -45,7 +32,11 @@ app.get("/blocking", async (req, res) => {
         threadResutls[3];
 
     res.status(200).send(
-        `result is ${total}, threadResutls is ${JSON.stringify(threadResutls)}`
+        responseModel({
+            message: `result is ${total}, threadResutls is ${JSON.stringify(
+                threadResutls
+            )}`,
+        })
     );
 });
 
@@ -55,7 +46,7 @@ app.get("/blocking-main-thread", async (req, res) => {
     for (let i = 0; i < operationsAmmount; i++) {
         counter++;
     }
-    res.status(200).send(`result is ${counter}`);
+    res.status(200).send(responseModel({ message: `result is ${counter}` }));
 });
 
 app.listen(port, () => {
