@@ -21,6 +21,7 @@ app.get("/non-blocking/", (req, res) => {
 // 4 seg aprox with 12 thread
 app.get("/blocking", async (req, res) => {
     const workerPromises = [];
+    const t0 = performance.now();
     for (let i = 0; i < THREAD_COUNT; i++) {
         workerPromises.push(createWorker({ THREAD_COUNT, operationsAmmount }));
     }
@@ -30,12 +31,12 @@ app.get("/blocking", async (req, res) => {
         threadResutls[1] +
         threadResutls[2] +
         threadResutls[3];
-
+    const t1 = performance.now();
     res.status(200).send(
         responseModel({
-            message: `result is ${total}, threadResutls is ${JSON.stringify(
+            message: `result: ${total}, threadResutls: ${JSON.stringify(
                 threadResutls
-            )}`,
+            )}, time: ${t1 - t0}ms`,
         })
     );
 });
@@ -43,10 +44,14 @@ app.get("/blocking", async (req, res) => {
 // 22 seg aprox
 app.get("/blocking-main-thread", async (req, res) => {
     let counter = 0;
+    const t0 = performance.now();
     for (let i = 0; i < operationsAmmount; i++) {
         counter++;
     }
-    res.status(200).send(responseModel({ message: `result is ${counter}` }));
+    const t1 = performance.now();
+    res.status(200).send(
+        responseModel({ message: `result: ${counter}, time: ${t1 - t0}ms` })
+    );
 });
 
 app.listen(port, () => {
